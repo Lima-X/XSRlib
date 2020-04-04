@@ -1,5 +1,6 @@
 #include "xoshiro.h"
 
+/* XoShiRo Rotate Sub Tool's */
 #ifdef XSR
 static inline uint64_t rotl64(const uint64_t ui64X, uint8_t ui8K) {
 	return (ui64X << ui8K) | (ui64X >> (64 - ui8K));
@@ -9,9 +10,8 @@ static inline uint32_t rotl32(const uint32_t ui32X, uint8_t ui8K) {
 }
 #endif
 
-#if (defined(XSR512) && (XSR512 == 1))
-#include <string.h>
-
+/* XoShiRo512-64Bit Algorithm */
+#if (defined(_XSR512) && (_XSR512 == 1))
 static uint64_t ui64_8S[8];
 static inline void fnNext512(void) {
 	const uint64_t ui64T = ui64_8S[1] << 11;
@@ -43,7 +43,7 @@ uint64_t fnNext512p(void) {
 	return ui64R;
 }
 
-static inline void fnJump512(uint64_t ui64_8[]) {
+static inline void fnJump512(const uint64_t ui64_8[]) {
 	uint64_t ui64T[sizeof(ui64_8S) / sizeof(*ui64_8S)];
 	memset(ui64T, 0, sizeof ui64T);
 	for (int i = 0; i < 8; i++)
@@ -80,9 +80,10 @@ void fnLJump512(void) {
 }
 #endif
 
-#if (defined(XSR256) && (XSR256 == 1))
+/* XoShiRo256-64Bit Algorithm */
+#if (defined(_XSR256) && (_XSR256 == 1))
 static uint64_t ui64_4S[4];
-static inline void fnNex256(void) {
+static inline void fnNext256(void) {
 	const uint64_t ui64T = ui64_4S[1] << 17;
 	ui64_4S[2] ^= ui64_4S[0];
 	ui64_4S[3] ^= ui64_4S[1];
@@ -94,17 +95,17 @@ static inline void fnNex256(void) {
 
 uint64_t fnNext256ss(void) {
 	const uint64_t ui64R = rotl64(ui64_4S[1] * 5, 7) * 9;
-	fnNex256();
+	fnNext256();
 	return ui64R;
 }
 uint64_t fnNext256pp(void) {
 	const uint64_t ui64R = rotl64(ui64_4S[0] + ui64_4S[3], 23) + ui64_4S[0];
-	fnNex256();
+	fnNext256();
 	return ui64R;
 }
 uint64_t fnNext256p(void) {
 	const uint64_t ui64R = ui64_4S[0] + ui64_4S[3];
-	fnNex256();
+	fnNext256();
 	return ui64R;
 }
 
@@ -118,7 +119,7 @@ static inline void fnJump256(const uint64_t ui64_4[]) {
 				s2 ^= ui64_4S[2];
 				s3 ^= ui64_4S[3];
 			}
-			fnNex256();
+			fnNext256();
 		}
 
 	ui64_4S[0] = s0; ui64_4S[1] = s1; ui64_4S[2] = s2; ui64_4S[3] = s3;
@@ -146,7 +147,8 @@ void fnLJump256(void) {
 }
 #endif
 
-#if (defined(XSR128) && (XSR128 == 1))
+/* XoShiRo128-32Bit Algorithm */
+#if (defined(_XSR128) && (_XSR128 == 1))
 static uint32_t ui32_4S[4];
 static inline void fnNext128(void) {
 	const uint32_t ui32T = ui32_4S[1] << 9;
@@ -211,3 +213,64 @@ void fnLJump128(void) {
 	fnJump128(ui32_4Jump);
 }
 #endif
+
+/* SplitMix64Bit Algorithm */
+#ifdef XSR
+static uint64_t ui64S;
+static uint64_t fnNextSM() {
+	uint64_t ui64Z = (ui64S += 0x9e3779b97f4a7c15);
+	ui64Z = (ui64Z ^ (ui64Z >> 30)) * 0xbf58476d1ce4e5b9;
+	ui64Z = (ui64Z ^ (ui64Z >> 27)) * 0x94d049bb133111eb;
+	return ui64Z ^ (ui64Z >> 31);
+}
+
+void fnInitSM64(uint64_t ui64Seed, uint16_t ui16Init) {
+	ui64S = ui64Seed;
+	for (int i = 0; i < ui16Init; i++) {
+		fnNextSM();
+	}
+}
+#endif
+
+/* XoShiRo Algorithm Interface Tool's */
+
+pXSR fnAllocXSR(enum XSRT xsrType, uint16_t ui16Init) {
+	if (ui16Init == (uint16_t)-1) {
+		ui16Init = (uint16_t)(fnNextSM() >> 48);
+	}
+
+	pXSR pHeap;
+	switch (xsrType) {
+	case XSR512:
+		pHeap = malloc(sizeof(uint64_t) * 8);
+
+		for (int i = 0; i < 8; i++)
+			((uint64_t*)pHeap)[i] = fnNextSM();
+		for (int i = 0; i < ui16Init; i++)
+			fnNext512();
+
+		break;
+	case XSR256:
+		pHeap = malloc(sizeof(uint64_t) * 4);
+
+		for (int i = 0; i < 4; i++)
+			((uint64_t*)pHeap)[i] = fnNextSM();
+		for (int i = 0; i < ui16Init; i++)
+			fnNext256();
+
+		break;
+	case XSR128:
+		pHeap = malloc(sizeof(uint32_t) * 4);
+
+		for (int i = 0; i < 4; i++)
+			((uint32_t*)pHeap)[i] = (uint32_t)(fnNextSM() >> 32);
+		for (int i = 0; i < ui16Init; i++)
+			fnNext128();
+
+		break;
+	default:
+		return 0x00;
+	}
+
+	return pHeap;
+}
