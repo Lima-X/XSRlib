@@ -60,6 +60,19 @@
 	#include <stdlib.h>
 
 	typedef void *pXSR, *pSM64;
+	typedef struct {
+		struct {
+			uint64_t (*fnSS)(pXSR);
+			uint64_t (*fnPP)(pXSR);
+			uint64_t (*fnP)(pXSR);
+			void (*fnLJ)(pXSR);
+			void (*fnSJ)(pXSR);
+		};
+		pXSR pS;
+	} sXSRT, *pXSRT;
+
+
+
 
 	typedef struct {
 		uint64_t(*fn)(pXSR);
