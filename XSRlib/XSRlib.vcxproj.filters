@@ -16,9 +16,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="distribution.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="xoshiro.c">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -2,7 +2,6 @@
 #define XSR_HIG
 
 /* XoShiRo Settings / Configuration *////////////////////////////////////////////////
-
 	#define XSR_512 1 // Enables Xoshiro512-64Bit (Default: 0)
 	#if (defined(XSR_512) && (XSR_512 == 1))
 		#define UINT 1
@@ -23,7 +22,6 @@
 	#endif
 
 /* XoShiRo Configuration Logic */////////////////////////////////////////////////////
-
 	#if ((defined(XSR_512) && (XSR_512 == 1)) ||\
 		 (defined(XSR_256) && (XSR_256 == 1)) ||\
 		 (defined(XSR_128) && (XSR_128 == 1)))
@@ -53,8 +51,25 @@
 	#endif
 
 /* XoShiRo General */////////////////////////////////////////////////////////////////
-
 	#ifdef XSR_
+	#define XSRParam(mod, ran, lj, sj, ns) (uint32_t)(((mod/128)<<30)|\
+										   (ran<<27)|(lj<<19)|(sj<<11)|ns)
+	#define XSR_RANDOM_LJUMP 4
+	#define XSR_RANDOM_SJUMP 2
+	#define XSR_RANDOM_NEXTS 1
+	#define XSR_RANDOM_ALL 7
+
+	#define XSRGen(fn, x) (x->fn(x->pS))
+	#define XSR_SS fnSS
+	#define XSR_PP fnPP
+
+	#define XSRUDist(dist, max, min, fn, x) dist(max, min, x->fn, x->pS)
+	#define XSR_D64 fn64URngDist
+	#define XSR_D32 fn64URngDist
+	#define XSRFDist(dist, x) dist(x)
+	#define XSR_DDIST fnDURngDist
+	#define XSR_FDIST fnFURngDist
+
 	#include <stdint.h>
 	#include <string.h>
 	#include <stdlib.h>
@@ -70,18 +85,6 @@
 		};
 		pXSR pS;
 	} sXSRT, *pXSRT;
-
-
-
-
-	typedef struct {
-		uint64_t(*fn)(pXSR);
-		pXSR xsr;
-	} sXSRT64, *pXSRT64;
-	typedef struct {
-		uint32_t(*fn)(pXSR);
-		pXSR xsr;
-	} sXSRT32, *pXSRT32;
 
 	#endif
 #endif

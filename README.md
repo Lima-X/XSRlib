@@ -11,11 +11,10 @@ I only planned so far to include tools to initialize the generators and
 to generate numbers uniformly in a specified interval.
 
 ## Current Progress
-XSRlib is now in Beta state.\
-Development is moving along nicely and the results seem promising with
-about 2.6ns per execution for XSR256 on x64 and half that for XSR128.\
-XSR512 obviously takes twice the time as XSR256.
+XSRlib is still in Beta state.
 
-It's also multithreading-safe now ^^, and the Setupfunction is now too in a state where it can be used,
-though not finished yet.\
-There is also still no documentation yet (, this will come in the future though).
+Development is almost done, everything considering code is Implemented (at least i think so).\
+The only things left for me to do are:
+- Review the code for any mistakes and last minute optimizations (including syntax)
+- Add proper preprocessor statements for configuration of features
+- Write the f*cking documentation...

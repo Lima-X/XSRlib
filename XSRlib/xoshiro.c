@@ -56,10 +56,6 @@ static inline void fnJump512(const uint64_t ui64_8[], pXSR xsr) {
 	memcpy(xsr, ui64T, sizeof(xsr));
 }
 
-/* This is the long-jump function for the generator. It is equivalent to
-   2^384 calls to next(); it can be used to generate 2^128 starting points,
-   from each of which jump() will generate 2^128 non-overlapping
-   subsequences for parallel distributed computations. */
 static void fnLJump512(pXSR xsr) {
 	static const uint64_t ui64Jump[] = {
 		0x11467fef8f921d28, 0xa2a819f2e79c8ea8, 0xa8299fc284b3959a, 0xb4d347340ca63ee1,
@@ -67,10 +63,6 @@ static void fnLJump512(pXSR xsr) {
 	};
 	fnJump512(ui64Jump, xsr);
 }
-
-/* This is the jump function for the generator. It is equivalent
-   to 2^256 calls to next(); it can be used to generate 2^256
-   non-overlapping subsequences for parallel computations. */
 static void fnSJump512(pXSR xsr) {
 	static const uint64_t ui64Jump[] = {
 		0x33ed89b6e7a353f9, 0x760083d7955323be, 0x2837f2fbb5f22fae, 0x4b8c5674d309511c,
@@ -110,7 +102,10 @@ static uint64_t fnNext256p(pXSR xsr) {
 }
 
 static inline void fnJump256(const uint64_t ui64_4[], pXSR xsr) {
-	uint64_t s0 = 0, s1 = 0, s2 = 0, s3 = 0;
+	uint64_t s0 = 0,
+			 s1 = 0,
+			 s2 = 0,
+			 s3 = 0;
 	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < 64; j++) {
 			if (ui64_4[i] & (1Ui64 << j)) {
@@ -122,24 +117,18 @@ static inline void fnJump256(const uint64_t ui64_4[], pXSR xsr) {
 			fnNext256(xsr);
 		}
 
-	((uint64_t*)xsr)[0] = s0; ((uint64_t*)xsr)[1] = s1;
-	((uint64_t*)xsr)[2] = s2; ((uint64_t*)xsr)[3] = s3;
+	((uint64_t*)xsr)[0] = s0;
+	((uint64_t*)xsr)[1] = s1;
+	((uint64_t*)xsr)[2] = s2;
+	((uint64_t*)xsr)[3] = s3;
 }
 
-/* This is the long-jump function for the generator. It is equivalent to
-   2^192 calls to next(); it can be used to generate 2^64 starting points,
-   from each of which jump() will generate 2^64 non-overlapping
-   subsequences for parallel distributed computations. */
 static void fnLJump256(pXSR xsr) {
 	static const uint64_t ui64_4Jump[] = {
 		0x76e15d3efefdcbbf, 0xc5004e441c522fb3, 0x77710069854ee241, 0x39109bb02acbe635
 	};
 	fnJump256(ui64_4Jump, xsr);
 }
-
-/* This is the jump function for the generator. It is equivalent
-   to 2^128 calls to next(); it can be used to generate 2^128
-   non-overlapping subsequences for parallel computations. */
 static void fnSJump256(pXSR xsr) {
 	static const uint64_t ui64_4Jump[] = {
 		0x180ec6d33cfd0aba, 0xd5a61266f0c9392c, 0xa9582618e03fc9aa, 0x39abdc4529b1661c
@@ -178,7 +167,10 @@ static uint32_t fnNext128p(pXSR xsr) {
 }
 
 static inline void fnJump128(const uint32_t ui32_4[], pXSR xsr) {
-	uint32_t s0 = 0, s1 = 0, s2 = 0, s3 = 0;
+	uint32_t s0 = 0,
+			 s1 = 0,
+			 s2 = 0,
+			 s3 = 0;
 	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < 32; j++) {
 			if (ui32_4[i] & (0x1U << j)) {
@@ -190,24 +182,18 @@ static inline void fnJump128(const uint32_t ui32_4[], pXSR xsr) {
 			fnNext128(xsr);
 		}
 
-	((uint32_t*)xsr)[0] = s0; ((uint32_t*)xsr)[1] = s1;
-	((uint32_t*)xsr)[2] = s2; ((uint32_t*)xsr)[3] = s3;
+	((uint32_t*)xsr)[0] = s0;
+	((uint32_t*)xsr)[1] = s1;
+	((uint32_t*)xsr)[2] = s2;
+	((uint32_t*)xsr)[3] = s3;
 }
 
-/* This is the long-jump function for the generator. It is equivalent to
-   2^96 calls to next(); it can be used to generate 2^32 starting points,
-   from each of which jump() will generate 2^32 non-overlapping
-   subsequences for parallel distributed computations. */
 static void fnLJump128(pXSR xsr) {
 	const uint32_t ui32_4Jump[] = {
 		0xb523952e, 0x0b6f099f, 0xccf5a0ef, 0x1c580662
 	};
 	fnJump128(ui32_4Jump, xsr);
 }
-
-/* This is the jump function for the generator. It is equivalent
-   to 2^64 calls to next(); it can be used to generate 2^64
-   non-overlapping subsequences for parallel computations. */
 static void fnSJump128(pXSR xsr) {
 	const uint32_t ui32_4Jump[] = {
 		0x8764000b, 0xf542d2d3, 0x6fa035c3, 0x77f2db5b
@@ -224,6 +210,56 @@ static uint64_t fnNextSM(uint64_t* ui64SM) {
 	ui64Z = (ui64Z ^ (ui64Z >> 27)) * 0x94d049bb133111eb;
 	return ui64Z ^ (ui64Z >> 31);
 }
+#endif
+
+/* Uniform Distribution Algorithms */////////////////////////////////////////////////
+#if (defined(UNIDIST) && (UNIDIST == 1))
+#if (defined(UNIDIST_UINT) && (UNIDIST_UINT == 1))
+#ifdef UNIDIST_UINT64
+uint64_t fn64URngDist(uint64_t ui64Max, uint64_t ui64Min, uint64_t* (*fnXSR)(pXSR), pXSR pS) {
+	uint64_t ui64Ret;
+	const uint64_t ui64Range = (ui64Max - ui64Min) + 1;
+	const uint64_t ui64Scale = (-1) / ui64Range;
+	const uint64_t ui64Limit = ui64Range * ui64Scale;
+
+	do {
+		ui64Ret = fnXSR(pS);
+	} while (ui64Ret >= ui64Limit);
+	ui64Ret /= ui64Scale;
+
+	return ui64Ret + ui64Min;
+}
+#endif
+#ifdef UNIDIST_UINT32
+uint32_t fn32URngDist(uint32_t ui32Max, uint32_t ui32Min, uint32_t* (*fnXSR)(pXSR), pXSR pS) {
+	uint32_t ui32Ret;
+	const uint32_t ui32Range = (ui32Max - ui32Min) + 1;
+	const uint32_t ui32Scale = (-1) / ui32Range;
+	const uint32_t ui32Limit = ui32Range * ui32Scale;
+
+	do {
+		ui32Ret = fnXSR(pS);
+	} while (ui32Ret >= ui32Limit);
+	ui32Ret /= ui32Scale;
+
+	return ui32Ret + ui32Min;
+}
+#endif
+#endif
+#if (defined(UNIDIST_REAL) && (UNIDIST_REAL == 1))
+double fnDURngDist(pXSRT xsr) {
+	// 53 bits resolution:
+	return (uint64_t)(xsr->fnP(xsr->pS) >> 11) * (1 / 0x20000000000000p0); // (r >> 11) * 2^(-53)
+	// 52 bits resolution:
+	return (uint64_t)(xsr->fnP(xsr->pS) >> 12) * (1 / 0x10000000000000p0);  // (r >> 12) * 2^(-52)
+}
+float fnFURngDist(pXSRT xsr) {
+	// 24 bits resolution:
+	return (uint32_t)(xsr->fnP(xsr->pS) >> 8) * (1. / 0x1000000p0); // (r >> 8) * 2^(-24)
+	// 23 bits resolution:
+	return (uint32_t)(xsr->fnP(xsr->pS) >> 9) * (1. / 0x800000p0);  // (r >> 9) * 2^(-23)
+}
+#endif
 #endif
 
 /* XoShiRo Algorithm Interface Tool's *//////////////////////////////////////////////
@@ -260,36 +296,49 @@ pXSRT fnAllocXSR(
 	if ((ui32XSR >> 27) & 0x1)
 		ui32XSR |= (uint16_t)fnNextSM(&ui64Seed) & 0x7ff;
 
-	void (*fnLJumpT)(pXSR) = 0;
-	void (*fnSJumpT)(pXSR) = 0;
-	void (*fnNextT)(pXSR) = 0;
+	void (*fnLJumpT)(pXSR) = 0,
+		 (*fnSJumpT)(pXSR) = 0,
+		 (*fnNextT)(pXSR) = 0;
 	pXSRT xsr = calloc(1, sizeof(sXSRT));
 	switch (ui32XSR >> 30) {
 	case 0b11:
 		xsr->pS = malloc(sizeof(uint64_t) * 8);
 		for (int i = 0; i < 8; i++)
 			((uint64_t*)xsr->pS)[i] = fnNextSM(&ui64Seed);
-		fnLJumpT = fnLJump512; fnSJumpT = fnSJump512; fnNextT = fnNext512;
-		xsr->fnSS = fnNext512ss; xsr->fnPP = fnNext512pp; xsr->fnP = fnNext512p;
-		xsr->fnLJ = fnLJump512; xsr->fnSJ = fnSJump512;
+		fnLJumpT = fnLJump512;
+		fnSJumpT = fnSJump512;
+		fnNextT = fnNext512;
+		xsr->fnSS = fnNext512ss;
+		xsr->fnPP = fnNext512pp;
+		xsr->fnP = fnNext512p;
+		xsr->fnLJ = fnLJump512;
+		xsr->fnSJ = fnSJump512;
 		break;
 	case 0b10:
 		xsr->pS = malloc(sizeof(uint64_t) * 4);
 		for (int i = 0; i < 4; i++)
 			((uint64_t*)xsr->pS)[i] = fnNextSM(&ui64Seed);
-		fnLJumpT = fnLJump256; fnSJumpT = fnSJump256; fnNextT = fnNext256;
-		xsr->fnSS = fnNext256ss; xsr->fnPP = fnNext256pp; xsr->fnP = fnNext256p;
-		xsr->fnLJ = fnLJump256; xsr->fnSJ = fnSJump256;
+		fnLJumpT = fnLJump256;
+		fnSJumpT = fnSJump256;
+		fnNextT = fnNext256;
+		xsr->fnSS = fnNext256ss;
+		xsr->fnPP = fnNext256pp;
+		xsr->fnP = fnNext256p;
+		xsr->fnLJ = fnLJump256;
+		xsr->fnSJ = fnSJump256;
 		break;
 	case 0b01:
 		xsr->pS = malloc(sizeof(uint32_t) * 4);
 		for (int i = 0; i < 4; i++)
 			((uint32_t*)xsr->pS)[i] = (uint32_t)(fnNextSM(&ui64Seed) >> 32);
-		fnLJumpT = fnLJump128; fnSJumpT = fnSJump128; fnNextT = fnNext128;
+		fnLJumpT = fnLJump128;
+		fnSJumpT = fnSJump128;
+		fnNextT = fnNext128;
 		xsr->fnSS = (uint64_t(*)(pXSR))fnNext128ss;
 		xsr->fnPP = (uint64_t(*)(pXSR))fnNext128pp;
 		xsr->fnP = (uint64_t(*)(pXSR))fnNext128p;
-		xsr->fnLJ = fnLJump128; xsr->fnSJ = fnSJump128;
+		xsr->fnLJ = fnLJump128;
+		xsr->fnSJ = fnSJump128;
 	}
 
 	for (int i = 0; i < (uint8_t)(ui32XSR >> 19); i++)
@@ -307,42 +356,22 @@ void fnDeAllocXSR(pXSRT xsr) {
 	free(xsr);
 }
 
-//#include <stdio.h>
 /* Test Stuff (Don't touch that) */
-uint64_t ui64URngDist(uint64_t ui64Max, uint64_t ui64Min, pXSRT64 xsrT64);
 int main() {
-	// Test Speed
-	pXSRT test = fnAllocXSR(531678126513478261,
-		0b10111000000010000000100000000001, 0b10000001);
-	uint64_t a = test->fnSS(test->pS);
+	// 10-111-00000001-00000001-00000000001
+	uint64_t testb = XSRParam(256, XSR_RANDOM_ALL, 1, 1, 1);
+	pXSRT test = fnAllocXSR(13167812262513478261, testb, 0b10000001);
 
+	uint64_t a = 0;
 	for (uint32_t i = 0; i < (uint32_t)-1; i++)
-		a = test->fnSS(test->pS);
+		a = XSRGen(XSR_SS, test);
+	for (uint32_t i = 0; i < (uint32_t)-1; i++)
+		a = XSRUDist(XSR_D64, 9000, 4, XSR_SS, test);
+
+	double b = 0;
+	for (uint32_t i = 0; i < (uint32_t)-1; i++)
+		b = XSRFDist(XSR_DDIST, test);
 
 	fnDeAllocXSR(test);
-
-	/* Test Uniform Distrubution
-	test256 = fnXSRSetup(531678126513478261,
-		0b10111000000010000000100000000001, 0b10000001);
-	double nA = 0;
-	uint64_t nB = 0;
-	uint64_t nBC = 0;
-
-	for (uint64_t i = 0; i < (uint64_t)-1; i++) {
-		double A = fnDURngDistC(i);
-		if (A == nA) {
-			nB++;
-		} else {
-			nA = A;
-			if (nB != nBC) {
-				printf_s("ERROR\n");
-			}
-			printf_s("B: %u\n", nB);
-			nBC = nB;
-			nB = 0;
-		}
-	}
-	free(test256); */
-
 	return 0;
 }

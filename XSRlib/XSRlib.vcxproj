@@ -145,7 +145,6 @@
     <ClInclude Include="xoshiro.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="distribution.c" />
     <ClCompile Include="xoshiro.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
