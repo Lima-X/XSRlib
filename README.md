@@ -13,8 +13,11 @@ to generate numbers uniformly in a specified interval.
 ## Current Progress
 XSRlib is still in Beta state.
 
-Development is almost done, everything considering code is Implemented (at least i think so).\
+Development is almost done, everything considering code is Implemented (at least i think so). (edit: nope it wasn't, should be now though.)\
 The only things left for me to do are:
 - Review the code for any mistakes and last minute optimizations (including syntax)
 - Add proper preprocessor statements for configuration of features
 - Write the f*cking documentation...
+
+## Quick Benchmarknumbers
+Xoshiro256 on Intel i5 8600k @ 4,3GHz (x64 MSVC): 1.904ns - 2.082ns per generated number
