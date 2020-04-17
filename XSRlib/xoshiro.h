@@ -8,10 +8,10 @@
 	#if ((defined(_XSR_512) && (_XSR_512 == 1)) ||\
 		(defined(_XSR_256) && (_XSR_256 == 1)) ||\
 		(defined(_XSR_128) && (_XSR_128 == 1)))
-		#define _XSR_
-		#define _XSR_JUMP 1
-		#define _XSR_UINT 1
-		#define _XSR_REAL 1
+		#define _XSR_		// ! Internal, don't modify !
+		#define _XSR_JUMP 1 // Enables Jumpfunctions (Default: 1)
+		#define _XSR_UINT 1 // Enables uniform Integer distrubution functions (Default: 1)
+		#define _XSR_REAL 1 // Enables uniform floatingpoint distrubution functions (Default: 0)
 	#endif
 
 /* XoShiRo Internal *////////////////////////////////////////////////////////////////
@@ -102,6 +102,7 @@
 			#endif
 
 			pXSRT fnAllocXSR(uint64_t ui64Seed, uint32_t ui32XSR, uint8_t ui8SM);
+			pXSRT fnCopyXSR(pXSRT xsr);
 			void fnDeAllocXSR(pXSRT xsr);
 		#ifdef __cplusplus
 		}

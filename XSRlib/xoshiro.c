@@ -396,6 +396,40 @@
 
 		return xsr;
 	}
+	pXSRT fnCopyXSR(pXSRT xsr) {
+		if (!xsr)
+			return 0;
+
+		pXSRT xsrC = malloc(sizeof(sXSRT));
+		#if (defined(_XSR_512) && (_XSR_512 == 1))
+			if (xsr->fnSS == fnNext512ss) {
+				xsrC->pS = malloc(sizeof(uint64_t) * 8);
+				memcpy(xsrC->pS, xsr->pS, sizeof(uint64_t) * 8);
+			} else
+		#endif
+		#if (defined(_XSR_256) && (_XSR_256 == 1))
+			if (xsr->fnSS == fnNext256ss) {
+				xsrC->pS = malloc(sizeof(uint64_t) * 4);
+				memcpy(xsrC->pS, xsr->pS, sizeof(uint64_t) * 4);
+			} else
+		#endif
+		#if (defined(_XSR_128) && (_XSR_128 == 1))
+			if (xsr->fnSS == fnNext128ss) {
+				xsrC->pS = malloc(sizeof(uint32_t) * 4);
+				memcpy(xsrC->pS, xsr->pS, sizeof(uint32_t) * 4);
+			}
+		#endif
+
+		xsrC->fnSS = xsr->fnSS;
+		xsrC->fnPP = xsr->fnPP;
+		xsrC->fnP = xsr->fnP;
+		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
+			xsrC->fnLJ = xsr->fnLJ;
+			xsrC->fnSJ = xsr->fnSJ;
+		#endif
+
+		return xsrC;
+	}
 	void fnDeAllocXSR(pXSRT xsr) {
 		free(xsr->pS);
 		free(xsr);
