@@ -1,18 +1,24 @@
 #include "xoshiro.h"
 
-/* XoShiRo Rotate Sub Tool's *///////////////////////////////////////////////////////
+/* XoShiRo Sub Tool's *//////////////////////////////////////////////////////////////
 #ifdef _XSR_
 	#if ((defined(_XSR_512) && (_XSR_512 == 1)) ||\
 		(defined(_XSR_256) && (_XSR_256 == 1)))
-		static inline uint64_t rotl64(const uint64_t ui64X, uint8_t ui8K) {
+		static inline uint64_t fnRotl64(const uint64_t ui64X, uint8_t ui8K) {
 			return (ui64X << ui8K) | (ui64X >> (64 - ui8K));
 		}
 	#endif
 	#if (defined(_XSR_128) && (_XSR_128 == 1))
-		static inline uint32_t rotl32(const uint32_t ui32X, uint8_t ui8K) {
+		static inline uint32_t fnRotl32(const uint32_t ui32X, uint8_t ui8K) {
 			return (ui32X << ui8K) | (ui32X >> (32 - ui8K));
 		}
 	#endif
+	static uint64_t fnNextSM64(uint64_t* ui64SM) {
+		uint64_t ui64Z = (*ui64SM += 0x9e3779b97f4a7c15);
+		ui64Z = (ui64Z ^ (ui64Z >> 30)) * 0xbf58476d1ce4e5b9;
+		ui64Z = (ui64Z ^ (ui64Z >> 27)) * 0x94d049bb133111eb;
+		return ui64Z ^ (ui64Z >> 31);
+	}
 #endif
 
 /* XoShiRo512-64Bit Algorithm *//////////////////////////////////////////////////////
@@ -28,16 +34,16 @@
 		((uint64_t*)xsr)[0] ^= ((uint64_t*)xsr)[6];
 		((uint64_t*)xsr)[6] ^= ((uint64_t*)xsr)[7];
 		((uint64_t*)xsr)[6] ^= ui64T;
-		((uint64_t*)xsr)[7] = rotl64(((uint64_t*)xsr)[7], 21);
+		((uint64_t*)xsr)[7] = fnRotl64(((uint64_t*)xsr)[7], 21);
 	}
 
 	static uint64_t fnNext512ss(pXSR xsr) {
-		const uint64_t ui64R = rotl64(((uint64_t*)xsr)[1] * 5, 7) * 9;
+		const uint64_t ui64R = fnRotl64(((uint64_t*)xsr)[1] * 5, 7) * 9;
 		fnNext512(xsr);
 		return ui64R;
 	}
 	static uint64_t fnNext512pp(pXSR xsr) {
-		const uint64_t ui64R = rotl64(((uint64_t*)xsr)[0] +
+		const uint64_t ui64R = fnRotl64(((uint64_t*)xsr)[0] +
 			((uint64_t*)xsr)[2], 17) + ((uint64_t*)xsr)[2];
 		fnNext512(xsr);
 		return ui64R;
@@ -88,16 +94,16 @@
 		((uint64_t*)xsr)[1] ^= ((uint64_t*)xsr)[2];
 		((uint64_t*)xsr)[0] ^= ((uint64_t*)xsr)[3];
 		((uint64_t*)xsr)[2] ^= ui64T;
-		((uint64_t*)xsr)[3] = rotl64(((uint64_t*)xsr)[3], 45);
+		((uint64_t*)xsr)[3] = fnRotl64(((uint64_t*)xsr)[3], 45);
 	}
 
 	static uint64_t fnNext256ss(pXSR xsr) {
-		const uint64_t ui64R = rotl64(((uint64_t*)xsr)[1] * 5, 7) * 9;
+		const uint64_t ui64R = fnRotl64(((uint64_t*)xsr)[1] * 5, 7) * 9;
 		fnNext256(xsr);
 		return ui64R;
 	}
 	static uint64_t fnNext256pp(pXSR xsr) {
-		const uint64_t ui64R = rotl64(((uint64_t*)xsr)[0] +
+		const uint64_t ui64R = fnRotl64(((uint64_t*)xsr)[0] +
 			((uint64_t*)xsr)[3], 23) + ((uint64_t*)xsr)[0];
 		fnNext256(xsr);
 		return ui64R;
@@ -155,16 +161,16 @@
 		((uint32_t*)xsr)[1] ^= ((uint32_t*)xsr)[2];
 		((uint32_t*)xsr)[0] ^= ((uint32_t*)xsr)[3];
 		((uint32_t*)xsr)[2] ^= ui32T;
-		((uint32_t*)xsr)[3] = rotl32(((uint32_t*)xsr)[3], 11);
+		((uint32_t*)xsr)[3] = fnRotl32(((uint32_t*)xsr)[3], 11);
 	}
 
 	static uint32_t fnNext128ss(pXSR xsr) {
-		const uint32_t ui32R = rotl32(((uint32_t*)xsr)[1] * 5, 7) * 9;
+		const uint32_t ui32R = fnRotl32(((uint32_t*)xsr)[1] * 5, 7) * 9;
 		fnNext128(xsr);
 		return ui32R;
 	}
 	static uint32_t fnNext128pp(pXSR xsr) {
-		const uint32_t ui32R = rotl32(((uint32_t*)xsr)[0] +
+		const uint32_t ui32R = fnRotl32(((uint32_t*)xsr)[0] +
 			((uint32_t*)xsr)[3], 7) + ((uint32_t*)xsr)[0];
 		fnNext128(xsr);
 		return ui32R;
@@ -213,21 +219,11 @@
 	#endif
 #endif
 
-/* SplitMix64Bit Algorithm */////////////////////////////////////////////////////////
-#ifdef _XSR_
-	static uint64_t fnNextSM(uint64_t* ui64SM) {
-		uint64_t ui64Z = (*ui64SM += 0x9e3779b97f4a7c15);
-		ui64Z = (ui64Z ^ (ui64Z >> 30)) * 0xbf58476d1ce4e5b9;
-		ui64Z = (ui64Z ^ (ui64Z >> 27)) * 0x94d049bb133111eb;
-		return ui64Z ^ (ui64Z >> 31);
-	}
-#endif
-
 /* Uniform Distribution Algorithms */////////////////////////////////////////////////
 #if (defined(_XSR_UINT) && (_XSR_UINT == 1))
 	#if ((defined(_XSR_512) && (_XSR_512 == 1)) ||\
 		(defined(_XSR_256) && (_XSR_256 == 1)))
-		uint64_t fn64URngDist(uint64_t ui64Max, uint64_t ui64Min, uint64_t (*fn)(pXSR), pXSR pS) {
+		uint64_t fnURID64(uint64_t ui64Max, uint64_t ui64Min, uint64_t (*fn)(pXSR), pXSR pS) {
 			uint64_t ui64Ret;
 			const uint64_t ui64Range = (ui64Max - ui64Min) + 1;
 			const uint64_t ui64Scale = (-1) / ui64Range;
@@ -242,7 +238,7 @@
 		}
 	#endif
 	#if (defined(_XSR_128) && (_XSR_128 == 1))
-		uint32_t fn32URngDist(uint32_t ui32Max, uint32_t ui32Min, uint32_t (*fn)(pXSR), pXSR pS) {
+		uint32_t fnURID32(uint32_t ui32Max, uint32_t ui32Min, uint32_t (*fn)(pXSR), pXSR pS) {
 			uint32_t ui32Ret;
 			const uint32_t ui32Range = (ui32Max - ui32Min) + 1;
 			const uint32_t ui32Scale = (-1) / ui32Range;
@@ -260,7 +256,7 @@
 #if (defined(_XSR_REAL) && (_XSR_REAL == 1))
 	#if ((defined(_XSR_512) && (_XSR_512 == 1)) ||\
 		(defined(_XSR_256) && (_XSR_256 == 1)))
-		double fnDURngDist(pXSRT xsr) {
+		double fnURRD53(pXSRT xsr) {
 			// 53 bits resolution:
 			return (uint64_t)(xsr->fnP(xsr->pS) >> 11) * (1 / 0x20000000000000p0); // (r >> 11) * 2^(-53)
 			// 52 bits resolution:
@@ -268,7 +264,7 @@
 		}
 	#endif
 	#if (defined(_XSR_128) && (_XSR_128 == 1))
-		float fnFURngDist(pXSRT xsr) {
+		float fnURRD24(pXSRT xsr) {
 			// 24 bits resolution:
 			return (uint32_t)(xsr->fnP(xsr->pS) >> 8) * (1. / 0x1000000p0); // (r >> 8) * 2^(-24)
 			// 23 bits resolution:
@@ -280,34 +276,34 @@
 /* XoShiRo Algorithm Interface Tool's *//////////////////////////////////////////////
 #ifdef _XSR_
 	/*	ui32XSR: 00-000-00000000-00000000-00000000000
-		Bit: 31-30: Binary  - GeneratorType:       11 = 512b; 10 = 256b; 01 = 128b;
-			 29-27: Bitwise - Random Initializers: 100 = LJ; 010 = SJ; 001 = NS;
-			 26-19: Binary  - Count of LongJumps:  0-255;
-			 18-11: Binary  - Count of ShortJumps: 0-255;
-			 10-0:  Binary  - Count of NextState:  0-2047;
+		Bit: 31-30 (2Bit):  Binary  - GeneratorType:       11 = 512b; 10 = 256b; 01 = 128b;
+			 29-27 (3Bit):  Bitwise - Random Initializers: 1XX = LJ; X1X = SJ; XX1 = NS;
+			 26-19 (8Bit):  Binary  - Count of LongJumps:  0-255;
+			 18-11 (8Bit):  Binary  - Count of ShortJumps: 0-255;
+			 10-0  (11Bit): Binary  - Count of NextState:  0-2047;
 
 		ui8SM: 0-0000000
-		Bit: 7:   Bitwise - Random Initializers: 1 = NS;
-			 6-0: Binary  - Count of NextState:  0-127; */
+		Bit: 7   (1Bit): Bitwise - Random Initializers: 1 = NS;
+			 6-0 (7Bit): Binary  - Count of NextState:  0-127;	*/
 	pXSRT fnAllocXSR(uint64_t ui64Seed, uint32_t ui32XSR, uint8_t ui8SM) {
 		if (!(ui32XSR >> 30))
 			return 0;
 
 		/* SM64 Init */
 		if (ui8SM >> 7)
-			ui8SM |= (uint8_t)fnNextSM(&ui64Seed) >> 1;
+			ui8SM |= (uint8_t)fnNextSM64(&ui64Seed) >> 1;
 		for (int i = 0; i < (ui8SM & 0x7f); i++)
-			fnNextSM(&ui64Seed);
+			fnNextSM64(&ui64Seed);
 
 		/* XSR Init */
 		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
 			if ((ui32XSR >> 29) & 0x1)
-				ui32XSR |= (uint8_t)fnNextSM(&ui64Seed) << 19;
+				ui32XSR |= (uint8_t)fnNextSM64(&ui64Seed) << 19;
 			if ((ui32XSR >> 28) & 0x1)
-				ui32XSR |= (uint8_t)fnNextSM(&ui64Seed) << 11;
+				ui32XSR |= (uint8_t)fnNextSM64(&ui64Seed) << 11;
 		#endif
 		if ((ui32XSR >> 27) & 0x1)
-			ui32XSR |= (uint16_t)fnNextSM(&ui64Seed) & 0x7ff;
+			ui32XSR |= (uint16_t)fnNextSM64(&ui64Seed) & 0x7ff;
 
 		void
 		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
@@ -316,13 +312,13 @@
 		#endif
 			(*fnNextT)(pXSR) = 0;
 
-		pXSRT xsr = calloc(1, sizeof(sXSRT));
+		pXSRT xsr = malloc(sizeof(sXSRT));
 		switch (ui32XSR >> 30) {
 		case 0b11:
 		#if (defined(_XSR_512) && (_XSR_512 == 1))
 			xsr->pS = malloc(sizeof(uint64_t) * 8);
 			for (int i = 0; i < 8; i++)
-				((uint64_t*)xsr->pS)[i] = fnNextSM(&ui64Seed);
+				((uint64_t*)xsr->pS)[i] = fnNextSM64(&ui64Seed);
 			#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
 				fnLJumpT = fnLJump512;
 				fnSJumpT = fnSJump512;
@@ -344,7 +340,7 @@
 		#if (defined(_XSR_256) && (_XSR_256 == 1))
 			xsr->pS = malloc(sizeof(uint64_t) * 4);
 			for (int i = 0; i < 4; i++)
-				((uint64_t*)xsr->pS)[i] = fnNextSM(&ui64Seed);
+				((uint64_t*)xsr->pS)[i] = fnNextSM64(&ui64Seed);
 			#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
 				fnLJumpT = fnLJump256;
 				fnSJumpT = fnSJump256;
@@ -366,7 +362,7 @@
 		#if (defined(_XSR_128) && (_XSR_128 == 1))
 			xsr->pS = malloc(sizeof(uint32_t) * 4);
 			for (int i = 0; i < 4; i++)
-				((uint32_t*)xsr->pS)[i] = (uint32_t)(fnNextSM(&ui64Seed) >> 32);
+				((uint32_t*)xsr->pS)[i] = (uint32_t)(fnNextSM64(&ui64Seed) >> 32);
 			#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
 				fnLJumpT = fnLJump128;
 				fnSJumpT = fnSJump128;
@@ -395,6 +391,59 @@
 			fnNextT(xsr->pS);
 
 		return xsr;
+	}
+	/*	ui32XSR: XX-000-00000000-00000000-00000000000
+		Bit: 29-27 (3Bit):  Bitwise - Random Initializers: 1XX = LJ; X1X = SJ; XX1 = NS;
+			 26-19 (8Bit):  Binary  - Count of LongJumps:  0-255;
+			 18-11 (8Bit):  Binary  - Count of ShortJumps: 0-255;
+			 10-0  (11Bit): Binary  - Count of NextState:  0-2047;	*/
+	void fnRelocXSR(pXSRT xsr, uint64_t ui64Seed, uint32_t ui32XSR, uint8_t ui8SM) {
+		if (!xsr)
+			return;
+
+		/* SM64 Init */
+		if (ui8SM >> 7)
+			ui8SM |= (uint8_t)fnNextSM64(&ui64Seed) >> 1;
+		for (int i = 0; i < (ui8SM & 0x7f); i++)
+			fnNextSM64(&ui64Seed);
+
+		/* XSR Init */
+		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
+			if ((ui32XSR >> 29) & 0x1)
+				ui32XSR |= (uint8_t)fnNextSM64(&ui64Seed) << 19;
+			if ((ui32XSR >> 28) & 0x1)
+				ui32XSR |= (uint8_t)fnNextSM64(&ui64Seed) << 11;
+		#endif
+		if ((ui32XSR >> 27) & 0x1)
+			ui32XSR |= (uint16_t)fnNextSM64(&ui64Seed) & 0x7ff;
+
+
+		#if (defined(_XSR_512) && (_XSR_512 == 1))
+			if (xsr->fnSS == fnNext512ss)
+				for (int i = 0; i < 8; i++)
+					((uint64_t*)xsr->pS)[i] = fnNextSM64(&ui64Seed);
+			else
+		#endif
+		#if (defined(_XSR_256) && (_XSR_256 == 1))
+			if (xsr->fnSS == fnNext256ss)
+				for (int i = 0; i < 4; i++)
+					((uint64_t*)xsr->pS)[i] = fnNextSM64(&ui64Seed);
+			else
+		#endif
+		#if (defined(_XSR_128) && (_XSR_128 == 1))
+			if (xsr->fnSS == fnNext128ss)
+				for (int i = 0; i < 4; i++)
+					((uint32_t*)xsr->pS)[i] = (uint32_t)(fnNextSM64(&ui64Seed) >> 32);
+		#endif
+
+		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
+			for (int i = 0; i < (uint8_t)(ui32XSR >> 19); i++)
+				xsr->fnLJ(xsr->pS);
+			for (int i = 0; i < (uint8_t)(ui32XSR >> 11); i++)
+				xsr->fnSJ(xsr->pS);
+		#endif
+		for (int i = 0; i < (uint16_t)(ui32XSR & 0x7ff); i++)
+			xsr->fnP(xsr->pS);
 	}
 	pXSRT fnCopyXSR(pXSRT xsr) {
 		if (!xsr)
@@ -430,8 +479,11 @@
 
 		return xsrC;
 	}
-	void fnDeAllocXSR(pXSRT xsr) {
+	void fnDelocXSR(pXSRT xsr) {
+		if (!xsr)
+			return;
 		free(xsr->pS);
 		free(xsr);
+		xsr = 0;
 	}
 #endif
