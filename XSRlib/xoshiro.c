@@ -19,6 +19,84 @@
 		ui64Z = (ui64Z ^ (ui64Z >> 27)) * 0x94d049bb133111eb;
 		return ui64Z ^ (ui64Z >> 31);
 	}
+	static inline void fnInit1(uint64_t* ui64Seed, uint32_t* ui32XSR, uint8_t* ui8SM) {
+		/* SM64 Init */
+		if (*ui8SM >> 7)
+			*ui8SM |= (uint8_t)fnNextSM64(ui64Seed) >> 1;
+		for (int i = 0; i < (*ui8SM & 0x7f); i++)
+			fnNextSM64(ui64Seed);
+
+		/* XSR Init */
+		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
+			if ((*ui32XSR >> 29) & 0x1)
+				*ui32XSR |= (uint8_t)fnNextSM64(ui64Seed) << 19;
+			if ((*ui32XSR >> 28) & 0x1)
+				*ui32XSR |= (uint8_t)fnNextSM64(ui64Seed) << 11;
+		#endif
+		if ((*ui32XSR >> 27) & 0x1)
+			*ui32XSR |= (uint16_t)fnNextSM64(ui64Seed) & 0x7ff;
+	}
+	static inline void fnInit2(pXSRT xsr, uint64_t* ui64Seed, uint8_t ui8XSR) {
+		switch (ui8XSR) {
+		case 0b11:
+		#if (defined(_XSR_512) && (_XSR_512 == 1))
+			xsr->pS = malloc(sizeof(uint64_t) * 8);
+			for (int i = 0; i < 8; i++)
+				((uint64_t*)xsr->pS)[i] = fnNextSM64(ui64Seed);
+			xsr->fnSS = fnNext512ss;
+			xsr->fnPP = fnNext512pp;
+			xsr->fnP = fnNext512p;
+			#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
+				xsr->fnLJ = fnLJump512;
+				xsr->fnSJ = fnSJump512;
+			#endif
+			break;
+		#else
+			return;
+		#endif
+		case 0b10:
+		#if (defined(_XSR_256) && (_XSR_256 == 1))
+			xsr->pS = malloc(sizeof(uint64_t) * 4);
+			for (int i = 0; i < 4; i++)
+				((uint64_t*)xsr->pS)[i] = fnNextSM64(ui64Seed);
+			xsr->fnSS = fnNext256ss;
+			xsr->fnPP = fnNext256pp;
+			xsr->fnP = fnNext256p;
+			#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
+				xsr->fnLJ = fnLJump256;
+				xsr->fnSJ = fnSJump256;
+			#endif
+			break;
+		#else
+			return;
+		#endif
+		case 0b01:
+		#if (defined(_XSR_128) && (_XSR_128 == 1))
+			xsr->pS = malloc(sizeof(uint32_t) * 4);
+			for (int i = 0; i < 4; i++)
+				((uint32_t*)xsr->pS)[i] = (uint32_t)(fnNextSM64(ui64Seed) >> 32);
+			xsr->fnSS = (uint64_t(*)(pXSR))fnNext128ss;
+			xsr->fnPP = (uint64_t(*)(pXSR))fnNext128pp;
+			xsr->fnP = (uint64_t(*)(pXSR))fnNext128p;
+			#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
+				xsr->fnLJ = fnLJump128;
+				xsr->fnSJ = fnSJump128;
+			#endif
+		#else
+			return;
+		#endif
+		}
+	}
+	static inline void fnInit3(pXSRT xsr, uint32_t ui32XSR) {
+		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
+			for (int i = 0; i < (uint8_t)(ui32XSR >> 19); i++)
+				xsr->fnLJ(xsr->pS);
+			for (int i = 0; i < (uint8_t)(ui32XSR >> 11); i++)
+				xsr->fnSJ(xsr->pS);
+		#endif
+		for (int i = 0; i < (uint16_t)(ui32XSR & 0x7ff); i++)
+			xsr->fnP(xsr->pS);
+	}
 #endif
 
 /* XoShiRo512-64Bit Algorithm *//////////////////////////////////////////////////////
@@ -288,162 +366,44 @@
 	pXSRT fnAllocXSR(uint64_t ui64Seed, uint32_t ui32XSR, uint8_t ui8SM) {
 		if (!(ui32XSR >> 30))
 			return 0;
-
-		/* SM64 Init */
-		if (ui8SM >> 7)
-			ui8SM |= (uint8_t)fnNextSM64(&ui64Seed) >> 1;
-		for (int i = 0; i < (ui8SM & 0x7f); i++)
-			fnNextSM64(&ui64Seed);
-
-		/* XSR Init */
-		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
-			if ((ui32XSR >> 29) & 0x1)
-				ui32XSR |= (uint8_t)fnNextSM64(&ui64Seed) << 19;
-			if ((ui32XSR >> 28) & 0x1)
-				ui32XSR |= (uint8_t)fnNextSM64(&ui64Seed) << 11;
-		#endif
-		if ((ui32XSR >> 27) & 0x1)
-			ui32XSR |= (uint16_t)fnNextSM64(&ui64Seed) & 0x7ff;
-
-		void
-		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
-			(*fnLJumpT)(pXSR) = 0,
-			(*fnSJumpT)(pXSR) = 0,
-		#endif
-			(*fnNextT)(pXSR) = 0;
+		fnInit1(&ui64Seed, &ui32XSR, &ui8SM);
 
 		pXSRT xsr = malloc(sizeof(sXSRT));
-		switch (ui32XSR >> 30) {
-		case 0b11:
-		#if (defined(_XSR_512) && (_XSR_512 == 1))
-			xsr->pS = malloc(sizeof(uint64_t) * 8);
-			for (int i = 0; i < 8; i++)
-				((uint64_t*)xsr->pS)[i] = fnNextSM64(&ui64Seed);
-			#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
-				fnLJumpT = fnLJump512;
-				fnSJumpT = fnSJump512;
-			#endif
-			fnNextT = fnNext512;
-			xsr->fnSS = fnNext512ss;
-			xsr->fnPP = fnNext512pp;
-			xsr->fnP = fnNext512p;
-			#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
-				xsr->fnLJ = fnLJump512;
-				xsr->fnSJ = fnSJump512;
-			#endif
-			break;
-		#else
-			free(xsr);
-			return 0;
-		#endif
-		case 0b10:
-		#if (defined(_XSR_256) && (_XSR_256 == 1))
-			xsr->pS = malloc(sizeof(uint64_t) * 4);
-			for (int i = 0; i < 4; i++)
-				((uint64_t*)xsr->pS)[i] = fnNextSM64(&ui64Seed);
-			#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
-				fnLJumpT = fnLJump256;
-				fnSJumpT = fnSJump256;
-			#endif
-			fnNextT = fnNext256;
-			xsr->fnSS = fnNext256ss;
-			xsr->fnPP = fnNext256pp;
-			xsr->fnP = fnNext256p;
-			#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
-				xsr->fnLJ = fnLJump256;
-				xsr->fnSJ = fnSJump256;
-			#endif
-			break;
-		#else
-			free(xsr);
-			return 0;
-		#endif
-		case 0b01:
-		#if (defined(_XSR_128) && (_XSR_128 == 1))
-			xsr->pS = malloc(sizeof(uint32_t) * 4);
-			for (int i = 0; i < 4; i++)
-				((uint32_t*)xsr->pS)[i] = (uint32_t)(fnNextSM64(&ui64Seed) >> 32);
-			#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
-				fnLJumpT = fnLJump128;
-				fnSJumpT = fnSJump128;
-			#endif
-			fnNextT = fnNext128;
-			xsr->fnSS = (uint64_t(*)(pXSR))fnNext128ss;
-			xsr->fnPP = (uint64_t(*)(pXSR))fnNext128pp;
-			xsr->fnP = (uint64_t(*)(pXSR))fnNext128p;
-			#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
-				xsr->fnLJ = fnLJump128;
-				xsr->fnSJ = fnSJump128;
-			#endif
-		#else
-			free(xsr);
-			return 0;
-		#endif
-		}
+		fnInit2(xsr, &ui64Seed, (ui32XSR >> 30));
 
-		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
-			for (int i = 0; i < (uint8_t)(ui32XSR >> 19); i++)
-				fnLJumpT(xsr->pS);
-			for (int i = 0; i < (uint8_t)(ui32XSR >> 11); i++)
-				fnSJumpT(xsr->pS);
-		#endif
-		for (int i = 0; i < (uint16_t)(ui32XSR & 0x7ff); i++)
-			fnNextT(xsr->pS);
-
+		fnInit3(xsr, ui32XSR);
 		return xsr;
 	}
-	/*	ui32XSR: XX-000-00000000-00000000-00000000000
-		Bit: 29-27 (3Bit):  Bitwise - Random Initializers: 1XX = LJ; X1X = SJ; XX1 = NS;
-			 26-19 (8Bit):  Binary  - Count of LongJumps:  0-255;
-			 18-11 (8Bit):  Binary  - Count of ShortJumps: 0-255;
-			 10-0  (11Bit): Binary  - Count of NextState:  0-2047;	*/
 	void fnRelocXSR(pXSRT xsr, uint64_t ui64Seed, uint32_t ui32XSR, uint8_t ui8SM) {
-		if (!xsr)
+		if (!xsr || !(ui32XSR >> 30))
 			return;
 
-		/* SM64 Init */
-		if (ui8SM >> 7)
-			ui8SM |= (uint8_t)fnNextSM64(&ui64Seed) >> 1;
-		for (int i = 0; i < (ui8SM & 0x7f); i++)
-			fnNextSM64(&ui64Seed);
+		fnInit1(&ui64Seed, &ui32XSR, &ui8SM);
 
-		/* XSR Init */
-		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
-			if ((ui32XSR >> 29) & 0x1)
-				ui32XSR |= (uint8_t)fnNextSM64(&ui64Seed) << 19;
-			if ((ui32XSR >> 28) & 0x1)
-				ui32XSR |= (uint8_t)fnNextSM64(&ui64Seed) << 11;
-		#endif
-		if ((ui32XSR >> 27) & 0x1)
-			ui32XSR |= (uint16_t)fnNextSM64(&ui64Seed) & 0x7ff;
+		uint8_t ui8Cmp = 0;
+		if (xsr->fnSS == fnNext512ss)
+			ui8Cmp = 3;
+		else if (xsr->fnSS == fnNext256ss)
+			ui8Cmp = 2;
+		else if (xsr->fnSS == fnNext128ss)
+			ui8Cmp = 1;
 
-
-		#if (defined(_XSR_512) && (_XSR_512 == 1))
+		if ((ui32XSR >> 30) == ui8Cmp) {
 			if (xsr->fnSS == fnNext512ss)
 				for (int i = 0; i < 8; i++)
 					((uint64_t*)xsr->pS)[i] = fnNextSM64(&ui64Seed);
-			else
-		#endif
-		#if (defined(_XSR_256) && (_XSR_256 == 1))
-			if (xsr->fnSS == fnNext256ss)
+			else if (xsr->fnSS == fnNext256ss)
 				for (int i = 0; i < 4; i++)
 					((uint64_t*)xsr->pS)[i] = fnNextSM64(&ui64Seed);
-			else
-		#endif
-		#if (defined(_XSR_128) && (_XSR_128 == 1))
-			if (xsr->fnSS == fnNext128ss)
+			else if (xsr->fnSS == fnNext128ss)
 				for (int i = 0; i < 4; i++)
 					((uint32_t*)xsr->pS)[i] = (uint32_t)(fnNextSM64(&ui64Seed) >> 32);
-		#endif
+		} else {
+			free(xsr->pS);
+			fnInit2(xsr, &ui64Seed, (ui32XSR >> 30));
+		}
 
-		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
-			for (int i = 0; i < (uint8_t)(ui32XSR >> 19); i++)
-				xsr->fnLJ(xsr->pS);
-			for (int i = 0; i < (uint8_t)(ui32XSR >> 11); i++)
-				xsr->fnSJ(xsr->pS);
-		#endif
-		for (int i = 0; i < (uint16_t)(ui32XSR & 0x7ff); i++)
-			xsr->fnP(xsr->pS);
+		fnInit3(xsr, ui32XSR);
 	}
 	pXSRT fnCopyXSR(pXSRT xsr) {
 		if (!xsr)

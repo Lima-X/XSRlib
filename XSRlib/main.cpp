@@ -16,15 +16,45 @@ int main() {
 	std::chrono::high_resolution_clock::time_point cT0, cT1;
 	long long cDC;
 	double dTAvg = 0;
+
+	// XSR Test Declarations
 	pXSRT test;
+	uint64_t num;
 
 	// Setup: 10-111-00000001-00000001-00000000001 / 1-0000001
-	uint32_t ParamA = XSRParamA(256, XSR_RANDOM_ALL, 1, 1, 1);
+	uint32_t ParamA = XSRParamA(XSR_256, XSR_RANDOM_ALL, 1, 1, 1);
 	uint32_t ParamB = XSRParamB(XSR_RANDOM_SM, 1);
-	std::cout << "XSR Setup Timer:\n";
+	test = fnAllocXSR(1316783262513478261, ParamA, ParamB);
+	num = XSRGen(XSR_SS, test);
+
+	fnRelocXSR(test, 35647173752273, ParamA, ParamB);
+	num = XSRGen(XSR_SS, test);
+
+	fnRelocXSR(test, 35647173752273, XSRParamA(4, XSR_RANDOM_ALL, 1, 1, 1), ParamB);
+	num = XSRGen(XSR_SS, test);
+	fnDelocXSR(test);
+
+	// Performance Test
+	test = fnAllocXSR(13167832262513478261, ParamA, ParamB);
+	std::cout << "XSR StdNumGen Timer:\n";
 	for (int i = 0; i < RETRY; i++) {
 		cT0 = std::chrono::high_resolution_clock::now();
-		test = fnAllocXSR(13167832262513478261 * i, ParamA, ParamB);
+		for (uint32_t i = 0; i < (uint32_t)LOOP; i++)
+			num = XSRGen(XSR_SS, test);
+
+		cT1 = std::chrono::high_resolution_clock::now();
+		cDC = std::chrono::duration_cast<std::chrono::nanoseconds>(cT1 - cT0).count();
+		dTAvg += (double)cDC / (uint32_t)LOOP;
+		std::cout << "\tTime: " << (double)cDC / (uint32_t)LOOP << "ns\n";
+	}
+	dTAvg /= RETRY;
+	std::cout << "\t\tURID Time AVG: " << dTAvg << "ns\n\n";
+	dTAvg = 0;
+
+/*	std::cout << "XSR Setup Timer:\n";
+	for (int i = 0; i < RETRY; i++) {
+		cT0 = std::chrono::high_resolution_clock::now();
+		test = fnAllocXSR(1316783262513478261 * (i + 1), ParamA, ParamB);
 
 		cT1 = std::chrono::high_resolution_clock::now();
 		cDC = std::chrono::duration_cast<std::chrono::microseconds>(cT1 - cT0).count();
@@ -34,26 +64,7 @@ int main() {
 	}
 	dTAvg /= RETRY;
 	std::cout << "\t\tSetuptime AVG: " << dTAvg << "us\n\n";
-	dTAvg = 0;
-	test = fnAllocXSR(13167832262513478261, ParamA, ParamB);
-
-	// Normal 64bit Generator
-	uint64_t num;
-	std::cout << "XSR StdNumGen Timer:\n";
-	for (int i = 0; i < 16; i++) {
-		cT0 = std::chrono::high_resolution_clock::now();
-		for (uint32_t i = 0; i < (uint32_t)LOOP; i++)
-			num = XSRGen(XSR_SS, test);
-
-		cT1 = std::chrono::high_resolution_clock::now();
-		cDC = std::chrono::duration_cast<std::chrono::nanoseconds>(cT1 - cT0).count();
-		dTAvg += (double)cDC / (uint32_t)LOOP;
-		std::cout << "\tUInttime: " << (double)cDC / (uint32_t)LOOP << "ns\n";
-	}
-	dTAvg /= RETRY;
-	std::cout << "\t\tUInttime AVG: " << dTAvg << "ns\n\n";
-	dTAvg = 0;
-
+	dTAvg = 0;	*/
 
 /*	// Dist 64bit Generator
 	cT0 = std::chrono::high_resolution_clock::now();

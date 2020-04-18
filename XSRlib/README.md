@@ -43,9 +43,7 @@ void fnRelocXSR(       // Reallocates/Reseeds an already existing XSR Data Struc
 )
 ```
 `ui32XSR`: use the `XSRParamA()` Macro to convert your parameters for the Xoshiro Generator into this single value.\
-`ui32XSR`: use the `XSRParamB()` Macro to convert your parameters for the SplitMix64 Seeder into this single value.\
-Note: `fnRelocXSR()` is not yet able to reallocate the basic size of the State,
-this is a feature to be implemented in a future release.
+`ui8SM`: use the `XSRParamB()` Macro to convert your parameters for the SplitMix64 Seeder into this single value.\
 
 ###### Copy-XoShiRo:
 ```c

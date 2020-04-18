@@ -20,29 +20,45 @@
 		#include <string.h>
 		#include <stdlib.h>
 
-		#define XSRParamA(mod, ran, lj, sj, ns) (uint32_t)(((mod == 512 ? 3 : mod / 128) << 30) |\
-												((ran & 0x7) << 27) | ((lj & 0xff) << 19) |\
-												((sj & 0xff) << 11) | (ns & 0x7ff))
+		/* MACRO XSRParamA */
+		#define XSRParamA(mod, ran, lj, sj, ns) (uint32_t)((mod << 30) | ((ran & 0x7) << 27) |\
+												((lj & 0xff) << 19) | ((sj & 0xff) << 11) |\
+												(ns & 0x7ff))
+		#if (defined(_XSR_512) && (_XSR_512 == 1))
+			#define XSR_512 3
+		#endif
+		#if (defined(_XSR_512) && (_XSR_512 == 1))
+			#define XSR_256 2
+		#endif
+		#if (defined(_XSR_512) && (_XSR_512 == 1))
+			#define XSR_128 1
+		#endif
 		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
 			#define XSR_RANDOM_LJUMP 4
 			#define XSR_RANDOM_SJUMP 2
+			#define XSR_RANDOM_ALL 7
+		#else
+			#define XSR_RANDOM_ALL 1
 		#endif
-		#define XSR_RANDOM_ALL 7
 		#define XSR_RANDOM_NEXTS 1
 
+		/* MACRO XSRParamB */
 		#define XSRParamB(mod, ns) (uint16_t)((mod << 7) | (ns & 0x7f))
 		#define XSR_RANDOM_SM 1
 
+		/* MACRO XSRPGen */
 		#define XSRGen(fn, xsr) (xsr->fn(xsr->pS))
 		#define XSR_SS fnSS
 		#define XSR_PP fnPP
 
+		/* MACRO XSRJump */
 		#if (defined(_XSR_JUMP) && (_XSR_JUMP == 1))
 			#define XSRJump(fn, xsr) (xsr->fn(xsr->pS))
 			#define XSR_LJUMP fnLJ
 			#define XSR_SJUMP fnSJ
 		#endif
 
+		/* MACRO XSRDist */
 		#if (defined(_XSR_UINT) && (_XSR_UINT == 1))
 			#define XSRUDist(dis, max, min, fn, xsr) dis(max, min, xsr->fn, xsr->pS)
 			#if ((defined(_XSR_512) && (_XSR_512 == 1)) ||\
