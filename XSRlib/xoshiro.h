@@ -43,7 +43,7 @@
 		#define XSR_RANDOM_NEXTS 1
 
 		/* MACRO XSRParamB */
-		#define XSRParamB(mod, ns) (uint16_t)((mod << 7) | (ns & 0x7f))
+		#define XSRParamB(ran, ns) (uint16_t)((ran << 7) | (ns & 0x7f))
 		#define XSR_RANDOM_SM 1
 
 		/* MACRO XSRPGen */
