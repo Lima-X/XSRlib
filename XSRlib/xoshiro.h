@@ -12,6 +12,7 @@
 		#define _XSR_JUMP 1 // Enables Jumpfunctions (Default: 1)
 		#define _XSR_UINT 1 // Enables uniform Integer distrubution functions (Default: 1)
 		#define _XSR_REAL 1 // Enables uniform floatingpoint distrubution functions (Default: 0)
+		#define _XSR_SCON 1 // Enables special Constructors (Default: 1)
 	#endif
 
 /* XoShiRo Internal *////////////////////////////////////////////////////////////////
@@ -21,9 +22,6 @@
 		#include <stdlib.h>
 
 		/* MACRO XSRParamA */
-		#define XSRParamA(mod, ran, lj, sj, ns) (uint32_t)((mod << 30) | ((ran & 0x7) << 27) |\
-												((lj & 0xff) << 19) | ((sj & 0xff) << 11) |\
-												(ns & 0x7ff))
 		#if (defined(_XSR_512) && (_XSR_512 == 1))
 			#define XSR_512 3
 		#endif
@@ -43,7 +41,6 @@
 		#define XSR_RANDOM_NEXTS 1
 
 		/* MACRO XSRParamB */
-		#define XSRParamB(ran, ns) (uint16_t)((ran << 7) | (ns & 0x7f))
 		#define XSR_RANDOM_SM 1
 
 		/* MACRO XSRPGen */
@@ -83,6 +80,7 @@
 		#ifdef __cplusplus
 		extern "C" {
 		#endif
+			/* XoShiRo DataStructure */
 			typedef void* pXSR;
 			typedef struct {
 				struct {
@@ -97,6 +95,20 @@
 				pXSR pS;
 			} sXSRT, * pXSRT;
 
+			/* XoShiRo Parameter Structure */
+			typedef struct {
+				uint32_t mod : 2;
+				uint32_t ran : 3;
+				uint32_t lj : 8;
+				uint32_t sj : 8;
+				uint32_t ns : 11;
+			} sXSRPA, * pXSRPA;
+			typedef struct {
+				uint8_t ran : 1;
+				uint8_t ns : 7;
+			} sXSRPB, * pXSRPB;
+
+			/* XoShiRo Function Declarations */
 			#if (defined(_XSR_UINT) && (_XSR_UINT == 1))
 				#if ((defined(_XSR_512) && (_XSR_512 == 1)) ||\
 					(defined(_XSR_256) && (_XSR_256 == 1)))
@@ -116,9 +128,11 @@
 				#endif
 			#endif
 
-			pXSRT fnAllocXSR(uint64_t ui64Seed, uint32_t ui32XSR, uint8_t ui8SM);
-			void fnRelocXSR(pXSRT xsr, uint64_t ui64Seed, uint32_t ui32XSR, uint8_t ui8SM);
-			pXSRT fnCopyXSR(pXSRT xsr);
+			pXSRT fnAllocXSR(uint64_t ui64Seed, sXSRPA sParamA, sXSRPB sParamB);
+			#if (defined(_XSR_SCON) && (_XSR_SCON == 1))
+				void fnRelocXSR(pXSRT xsr, uint64_t ui64Seed, sXSRPA sParamA, sXSRPB sParamB);
+				pXSRT fnCopyXSR(pXSRT xsr);
+			#endif
 			void fnDelocXSR(pXSRT xsr);
 		#ifdef __cplusplus
 		}
