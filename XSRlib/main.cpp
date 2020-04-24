@@ -16,6 +16,8 @@
    IN THE 1.0 RELEASE THIS FILE WILL BE REPLACED BY PROPER DOCUMENTATION */
 int main() {
 	std::cout << ":========: XSRlib Performance Test START :========:\n\n";
+	SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+	//SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
 
 	// Chrono Declarations
 	std::chrono::high_resolution_clock::time_point cT0, cT1;
@@ -24,28 +26,28 @@ int main() {
 	double dTAvg2 = 0;
 
 	// XSR Test Declarations
-	pXSRT test;
+	pXSR test;
 	uint64_t num;
 
 	// Setup: 10-111-00000001-00000001-00000000001 / 1-0000001
-	sXSRPA ParamA = { XSR_128, XSR_RANDOM_ALL, 1, 1, 1 };
+	sXSRPA ParamA = { XSR_256, XSR_RANDOM_ALL, /*1, 1,*/ 1 };
 	sXSRPB ParamB = { XSR_RANDOM_SM, 1 };
 	test = fnAllocXSR(1316783262513478261, ParamA, ParamB);
 	num = XSRGen(XSR_SS, test);
 
-	fnRelocXSR(test, 35647173752273, ParamA, ParamB);
+	test = fnRelocXSR(test, 35647173752273, { XSR_128, XSR_RANDOM_ALL, /*129, 129,*/ 1025 }, ParamB);
 	num = XSRGen(XSR_SS, test);
 
-	fnRelocXSR(test, 35647173752273, { XSR_512, XSR_RANDOM_ALL, 129, 129, 1025 } , ParamB);
+//	test = fnRelocXSR(test, 35647173752273, { XSR_512, XSR_RANDOM_ALL, /*129, 129,*/ 1025 }, ParamB);
 	num = XSRGen(XSR_SS, test);
 	fnDelocXSR(test);
 
 	// Performance Test
-	test = fnAllocXSR(13167832262513478261, ParamA, ParamB);
+	test = fnAllocXSR(13167832262513478261, { XSR_256, XSR_RANDOM_ALL, 1, 1, 1 }, ParamB);
 	std::cout << "XSR StdNumGen Slow Timer:\n";
 	for (int i = 0; i < RETRY1; i++) {
 		cT0 = std::chrono::high_resolution_clock::now();
-		for (uint32_t i = 0; i < (uint32_t)LOOP1; i++)
+		for (uint32_t j = 0; j < (uint32_t)LOOP1; j++)
 			num = XSRGen(XSR_SS, test);
 
 		cT1 = std::chrono::high_resolution_clock::now();
@@ -64,7 +66,7 @@ int main() {
 	std::cout << "XSR StdNumGen Fast Timer:\n";
 	for (int i = 0; i < RETRY2; i++) {
 		cT0 = std::chrono::high_resolution_clock::now();
-		for (uint32_t i = 0; i < (uint32_t)LOOP2; i++)
+		for (uint32_t j = 0; j < (uint32_t)LOOP2; j++)
 			num = XSRGen(XSR_SS, test);
 
 		cT1 = std::chrono::high_resolution_clock::now();
@@ -82,7 +84,7 @@ int main() {
 	std::cout << "URID Time EAVG: " << (dTAvg2 + dTAvg) / 2 << "ns\n";
 	std::cout << "URID Time Diff: " << dTAvg2 - dTAvg << "ns\n\n";
 
-/*	std::cout << "XSR Setup Timer:\n";
+	/*std::cout << "XSR Setup Timer:\n";
 	for (int i = 0; i < RETRY; i++) {
 		cT0 = std::chrono::high_resolution_clock::now();
 		test = fnAllocXSR(1316783262513478261 * (i + 1), ParamA, ParamB);
@@ -95,10 +97,10 @@ int main() {
 	}
 	dTAvg /= RETRY;
 	std::cout << "\t\tSetuptime AVG: " << dTAvg << "us\n\n";
-	dTAvg = 0;	*/
+	dTAvg = 0;*/
 
-/*	// Dist 64bit Generator
-	cT0 = std::chrono::high_resolution_clock::now();
+	// Dist 64bit Generator
+	/*cT0 = std::chrono::high_resolution_clock::now();
 	for (uint32_t i = 0; i < (uint32_t)-1; i++)
 		num = XSRUDist(XSR_D64, 9000, 4, XSR_SS, test);
 	cT1 = std::chrono::high_resolution_clock::now();
@@ -112,10 +114,12 @@ int main() {
 		b = XSRFDist(XSR_DDIST, test);
 	cT1 = std::chrono::high_resolution_clock::now();
 	cDC = std::chrono::duration_cast<std::chrono::nanoseconds>(cT1 - cT0).count();
-	std::cout << "fdist (ns avg): " << (double)cDC / (uint32_t)-1 << std::endl; */
+	std::cout << "fdist (ns avg): " << (double)cDC / (uint32_t)-1 << std::endl;*/
 
-//	XSRJump(XSR_LJUMP, test);
-//	XSRJump(XSR_SJUMP, test);
+	//XSRJump(XSR_LJUMP, test);
+	//XSRJump(XSR_SJUMP, test);
+
+	//SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 
 	fnDelocXSR(test);
 	std::cout << ":========: XSRlib Performance Test END   :========:\n";
